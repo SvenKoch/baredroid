@@ -1,6 +1,6 @@
 # **BareDroid** #
 
-This project wants to introduce a new malware analysis framework...
+BareDroid allows for bare-metal analysis on Android devices. See the paper (#)[here]
 
 ## Folders ##
 
@@ -14,14 +14,8 @@ in the *store* partition (partition number 30). This is needed only when you wan
 
 **backup_and_restore**: used to create a backup and restore it. It is a merge of the previous scripts.
 
-**setup_device**: contains images, libraries and apks used to setup a device. More specifically:
-*	openrecovery-twrp-2.8.1.0-hammerhead.img: recovery image;
-*	pa_gapps-modular-full-4.4.4-20141011-signed.zip: gapps;
-*	UPDATE-SuperSU-v2.16.apk: SuperSU library;
-*	de.robv.android.xposed.installer_v32_de4f0d.apk: Xposed framework;
-*	xposed.apk: Bill's module;
-*	script: used to setup a device. Basically, this script creates the new partitions;
-*	push.sh: used to push the files, such as copy (used by the infrastructure to update the device) and loggedfs (used to get info about FUSE file system) on the device.
+**setup_device**:
+*	setup: used to setup a device. Basically, this script creates the new partitions;
 
 ---
 
@@ -36,7 +30,7 @@ in the *store* partition (partition number 30). This is needed only when you wan
 *	update_manager_recovery.py: represents a separate process used to update the device during the reboot. it is used to perform a relabel of the userdata partition ( SELinux :) );
 
 **update/config**: contains cfg and info files used to setup the python scripts.
-*	config.cfg: contains the information about where to save the logs, and which scripts use to perform the analysis (e.g., ransomware scripts)
+*	config.cfg: contains the information about where to save the logs, and which scripts use to perform the analysis
 *	devices.info: contains general information about the devices (e.g., user, AndroidId)
 
 ## How to backup ##
@@ -54,11 +48,9 @@ in the *store* partition (partition number 30). This is needed only when you wan
 ## Analysis script ##
 The goal of this script is to provide a wrapper between the experiment and the infrastructure, *SetupAndStart* is the main method and the only one called by the infrastructure (i.e., update_manager.py line 178). It setups the environment for the experiment (e.g., adb root) and run the experiment.
 If you want to use your code in an experiment you need to:
-1.	modify the config.cfg file. In the stanza 'Project' as folder put the absolute path to the code that you want to use;
-2.	create an experiment.py file containing the 'Experiment' class (in the next version I will use a different approach for noe this works fine...);
-3.	define a 'run' method in the Experiment class. This is the method used by the wrapper to start the experiment; 
-
-In the next version I will use only the *config.cfg* file in order to have a clear distinction between the experiment and the infrastructure...
+1.	modify the config.cfg file. In the stanza 'Project' put the absolute path to the code that you want to use;
+2.	create an python script containing the class used in the stanza 'class' of the config.cfg file;
+3.	define a 'run' method in the config.cfg file. This is the method used by the wrapper to start the experiment.
 
 ## how to add a new device to the infrastructure ##
 
@@ -74,38 +66,24 @@ general consideration:
 
 
 ## How to run an experiment ##
-*I will use the Bill's script as example*
-
 Architectural overview:
 
 ![alt tag](https://docs.google.com/drawings/d/1UXaQkFElMduaZckbcicz3zloDz9SOA5aap_CV0FFMhQ/pub?w=465&amp;h=259)
 
 
-1.	to run an experiment you need to include the absolute path of the experiment folder in the *update/config/config.cfg* file:
+1.	to run an experiment you need to include the absolute path of the folder containing the samples to analyze;
+2.	run the manager start script against the folder containing the apps to analyze;
 
 example
 
 ```
-  ...
-  [Project]
-  folder=/home/mutti/git/ransomware/experimental/
-```
-2.	run the manager script against the folder (specified using the 'd' option) containing the apps to analyze;
-
-example
-
-```
-python manager.py -d path/to/folder/
+./start_baredroid path/to/folder/containing/samples
 ```
 
 3.	the script will prompt a command line interface which allows the user to interact with the infrastructure (e.g., start experiment);
 4.	select option '2' to run the experiment;
-5.	when the experiment is finished click on 'q'; (due to uiautomator problem run *killall python* :) )
+5.	when the experiment is finished click on 'q';
 6.	the results are stored in the 'update/experiment' folder.
 
-
-
 ---
-
-*author:* Simone Mutti
 *email:* simone.mutti@unibg.it
