@@ -1,0 +1,52 @@
+#!/bin/bash
+
+echo "umount /sdcard" 
+e=`umount /sdcard`
+
+echo "umount /data" 
+e=`umount /data`
+
+echo "delete partition 28 userdata" 
+e=`./parted /dev/block/mmcblk0 rm 28`
+
+#echo "delete partition 29 grow" 
+#e=`./parted /dev/block/mmcblk0 rm 29`
+
+#16GB
+
+#userdata
+echo "mkpartfs 1 ext2 2032MB 7.9GB" 
+e=`./parted /dev/block/mmcblk0 mkpartfs 1 ext2 2032MB 7.9GB`
+
+#userdatanew
+echo "mkpartfs 1 ext2 7900MB 13.8GB" 
+e=`./parted /dev/block/mmcblk0 mkpartfs 1 ext2 7900MB 13.8GB`
+
+#store
+echo "mkpartfs 1 ext2 13.8GB 15.7GB" 
+e=`./parted /dev/block/mmcblk0 mkpartfs 1 ext2 13.8GB 15.7GB`
+
+#name partitions
+echo "name 28 userdata" 
+e=`./parted /dev/block/mmcblk0 name 28 userdata`
+
+echo "name 29 userdatanew" 
+e=`./parted /dev/block/mmcblk0 name 29 userdatanew`
+
+echo "name 30 store" 
+e=`./parted /dev/block/mmcblk0 name 30 store`
+
+#32GB
+
+#mkpartfs 1 ext2 2032MB  15.7GB
+
+#mkpartfs 1 ext2 15.7GB  29.4GB
+
+#mkpartfs 1 ext2 29.4GB  31.3GB
+
+#name 28 userdata
+
+#name 29 userdatanew
+
+#name 30 store
+

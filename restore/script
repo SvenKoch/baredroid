@@ -1,0 +1,40 @@
+#!/bin/bash
+
+adb reboot recovery
+sleep 2
+devices=`adb devices`
+recovery="recovery"
+found=false
+while [[ -n "$devices" ]]; do
+
+	echo "<waiting for devices>"
+	devices=`adb devices`
+	sleep 2
+
+	for item in ${devices//\\n/
+	}
+	do
+		if [[ "$item" == "$recovery" ]]; then
+			devices=""
+			break
+		fi
+done
+done
+sleep 5
+#upload a new openrecoveryscript, 
+#this script will be executed at the next reboot in recovery 
+echo "push swap"
+adb push ./restore /
+echo "push twrpTar"
+adb push ./twrpTar /
+
+sleep 3
+echo "Update permission."
+adb shell chmod 755 /restore
+adb shell chmod 755 /twrpTar
+adb shell sh /restore
+
+adb shell rm -rf /restore
+adb shell rm -rf /twrpTar
+
+#adb reboot system

@@ -1,0 +1,120 @@
+#!/bin/bash
+
+#define variables
+block="mmcblk0"
+prefix="$block""p"
+
+#create entry point /update will be used to mount the "base" partition
+upd_dir="/test"
+echo "mkdir $upd_dir"
+e=`mkdir $upd_dir`
+datatar="$upd_dir/data.tar"
+systemimg="$upd_dir/system.img"
+bootimg="$upd_dir/boot.img"
+
+curr_user_part="userdata "
+new_user_part="userdatanew "
+
+base_name_part="store "
+base_num_part=""
+user_num_part=""
+n_sys_num_part="25"
+
+boot_name=" boot "
+boot_part=""
+
+copy_data(){
+	date1=$(date +"%s")
+
+	# restore new partition
+	echo "./twrpTar -c -d /data -t $datatar"
+	e=`./twrpTar -c -d /data -t $datatar`
+
+	date2=$(date +"%s")
+	diff=$(($date2-$date1))
+	echo "Copy data ""$(($diff / 60)) minutes and $(($diff % 60)) seconds elapsed."
+}
+
+copy_system(){
+	date1=$(date +"%s")
+	###system
+
+	echo "cat /dev/block/$prefix$n_sys_num_part > $systemimg" 
+	e=`cat /dev/block/$prefix$n_sys_num_part > $systemimg`
+	
+	date2=$(date +"%s")
+	diff=$(($date2-$date1))
+	echo "Copy system ""$(($diff / 60)) minutes and $(($diff % 60)) seconds elapsed." 
+}
+
+copy_boot(){
+	date1=$(date +"%s")
+	###system
+
+	echo "cat /dev/block/$prefix$n_boot_num_part > $bootimg" 
+	e=`cat /dev/block/$prefix$n_boot_num_part > $bootimg`
+	
+	date2=$(date +"%s")
+	diff=$(($date2-$date1))
+	echo "Copy system ""$(($diff / 60)) minutes and $(($diff % 60)) seconds elapsed." 
+}
+
+IFS='
+'
+for f in `ls -la /dev/block/platform/msm_sdcc.1/by-name/`; 
+	do
+		case "$f" in 
+    	*$curr_user_part*)
+    		c_user_name_part=`basename $f`
+			c_user_num_part=${c_user_name_part#$prefix}
+			echo "Found $curr_user_part at partition $c_user_num_part" 
+    	;;
+    	*$new_user_part*)
+    		n_user_name_part=`basename $f`
+			n_user_num_part=${n_user_name_part#$prefix}
+			echo "Found $new_user_part at partition $n_user_num_part" 
+    	;;
+    	*$base_name_part*)
+    		n_base_name_part=`basename $f`
+			n_base_num_part=${n_base_name_part#$prefix}
+			echo "Found $base_name_part at partition $n_base_num_part" 
+    	;;
+    	*$boot_name*)
+    		boot_part=`basename $f`
+			n_boot_num_part=${boot_part#$prefix}
+			echo "Found $boot_name at partition $n_boot_num_part" 
+    	;;
+	esac
+done
+
+echo "mount -w -t ext4 /dev/block/$prefix$n_base_num_part $upd_dir"
+e=`mount -w -t ext4 /dev/block/$prefix$n_base_num_part $upd_dir`
+
+echo "rm -rf $upd_dir/*" 
+e=`rm -rf $upd_dir/*`
+
+echo "copy system..."
+copy_system
+echo "done."
+
+echo "mount /system"
+if mount|grep "/system"; then
+	echo "/system already mounted"
+	e=`umount /system`
+fi
+
+echo "mount -w -t ext4 /dev/block/$prefix$n_sys_num_part /system" 
+e=`mount -w -t ext4 /dev/block/$prefix$n_sys_num_part /system`
+
+echo "copy_data"
+copy_data 
+
+echo "copy_boot"
+copy_boot
+ 
+e=`umount /data`
+e=`umount $upd_dir`
+e=`rm -rf $upd_dir`
+
+exit 0
+
