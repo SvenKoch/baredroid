@@ -1,0 +1,61 @@
+#!/bin/bash
+
+#
+log="$2"
+#
+
+#adb reboot recovery
+sleep 2
+devices=`adb devices`
+serial="$1"
+recovery="recovery"
+found=1
+while [[ -n "$devices" ]]; do
+
+	echo "$serial: <waiting for devices>" >> "$log"
+	devices=`adb devices`
+	sleep 2
+
+	for item in ${devices//\\n/
+	}
+	do
+		if [[ "$item" == "$serial" ]]; then
+			devices=""
+			found=0
+		elif [[ found -eq 0 && "$item" == "$recovery" ]]; then
+			echo "$serial: Device $serial is in '$recovery' mode" >> "$log"
+			devices=""
+			break
+		fi
+done
+done
+
+sleep 5
+#upload a new openrecoveryscript, 
+#this script will be executed at the next reboot in recovery 
+echo "$serial: push swap" >> "$log"
+adb push ./swap /cache/recovery/
+echo "$serial: push parted" >> "$log"
+adb push ./parted /cache/recovery/
+echo "$serial: push twrpTar" >> "$log"
+adb push ./twrpTar /cache/recovery/
+
+sleep 1
+echo "$serial: Update permission." >> "$log"
+adb shell chmod 755 /cache/recovery/swap
+adb shell chmod 755 /cache/recovery/parted
+adb shell chmod 755 /cache/recovery/twrpTar
+echo "$serial: Run swap script." >> "$log"
+adb shell sh /cache/recovery/swap
+
+adb shell rm -rf /cache/recovery/swap
+adb shell rm -rf /cache/recovery/parted
+
+
+
+#perform runtime copy
+#source ./update/runtime/script $serial
+#echo "$serial: Script End" >> "$log"
+#reset the shell to "shell" user
+#adb shell 'setprop service.adb.root 0; setprop ctl.restart adbd'
+

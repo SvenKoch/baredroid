@@ -1,0 +1,21 @@
+#!/usr/bin/env bash
+
+_SESSION=BareDroid_session
+IFS='%'
+set -e
+
+if [ $# -eq 0 ]
+  then
+    echo "Please specify the directory containing the apps to analyze"
+    exit 1
+fi
+
+#Create new session
+tmux new-session -s $_SESSION -d
+args="python manager.py -s $_SESSION -d $1 "
+
+printf "$args"
+
+tmux send-keys -t $_SESSION $args enter
+
+tmux attach

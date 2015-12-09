@@ -1,0 +1,22 @@
+#!/bin/bash
+
+#upload a new openrecoveryscript, 
+#this script will be executed at the next reboot in recovery 
+#echo "push copy"
+#adb push ./runtime/copy /data/security/
+#echo "push twrpTar"
+#adb push ./runtime/twrpTar /data/security/
+
+#echo "Update permission."
+#adb shell chmod 755 /data/security/copy
+#adb shell chmod 755 /data/security/twrpTar
+sleep 8
+echo "adb -s $1 shell su 0 sh /data/security/shell/copy"
+adb -s $1 shell su 0 sh /data/security/shell/copy
+
+#echo "Remove files."
+#adb shell rm -rf /data/security/shell/*
+
+echo "Ready."
+
+#adb reboot recovery

@@ -1,0 +1,96 @@
+#!/bin/bash
+
+#define variables
+block="mmcblk0"
+prefix="$block""p"
+
+#create entry point /update will be used to mount the "base" partition
+upd_dir="/data/security/shell/update"
+upd_dir_data="/data/security/shell/update/tmp_data"
+upd_dir_base="/data/security/shell/update/base"
+echo "mkdir $upd_dir"
+e=`mkdir $upd_dir`
+e=`mkdir $upd_dir_data`
+e=`mkdir $upd_dir_base`
+datatar="$upd_dir_base/data.tar"
+
+curr_user_part="userdata "
+new_user_part="userdatanew "
+base_name_part="store "
+base_num_part=""
+
+sys_num_part=""
+user_num_part=""
+
+copy_data(){
+	date1=$(date +"%s")
+	###data
+
+	#mount base
+	echo "mount -w -t ext4 /dev/block/$prefix$n_base_num_part $upd_dir_base"
+	e=`mount -w -t ext4 /dev/block/$prefix$n_base_num_part $upd_dir_base`
+	
+	# mount new partition
+	echo "mount -w -t ext4 /dev/block/$prefix$n_user_num_part $upd_dir_data"
+	e=`mount -w -t ext4 /dev/block/$prefix$n_user_num_part $upd_dir_data`
+	# clean new partition
+	
+
+	###### I can't modify the file_contexts thus I can't create a security context for this folder
+	echo "make_ext4fs -a $upd_dir_data /dev/block/$prefix$n_user_num_part"
+	e=`make_ext4fs -a $upd_dir_data /dev/block/$prefix$n_user_num_part`
+	###########
+	echo "umount $upd_dir_data"
+	e=`umount $upd_dir_data`
+	
+	echo "mount -w -t ext4 /dev/block/$prefix$n_user_num_part $upd_dir_data"
+	e=`mount -w -t ext4 /dev/block/$prefix$n_user_num_part $upd_dir_data`
+
+	#simple solution rm -rf :)
+	#e=`rm -rf $upd_dir_data/*`
+
+	# restore new partition
+	echo "/data/security/shell/./twrpTar -x -d $upd_dir_data -t $datatar"
+	e=`/data/security/shell/./twrpTar -x -d $upd_dir_data -t $datatar`
+	#e=`umount /tmp_data`
+
+	date2=$(date +"%s")
+	diff=$(($date2-$date1))
+	echo "Copy data ""$(($diff / 60)) minutes and $(($diff % 60)) seconds elapsed."
+}
+
+IFS='
+'
+for f in `ls -la /dev/block/platform/msm_sdcc.1/by-name/`; 
+	do
+		case "$f" in 
+    	*$curr_user_part*)
+    		#c_user_name_part=`basename $f` # I can't use 'basename' in stock rom, and also 'cut' ...WAT...
+    		## get the last two decimal in the path (example: lrwxrwxrwx root root 1970-07-09 21:07 userdata -> /dev/block/mmcblk0p28
+    		size=${#f}
+    		c_user_num_part=${f:$size-2:$size}
+			##
+			echo "Found $curr_user_part at partition $c_user_num_part"
+    	;;
+    	*$new_user_part*)
+			size=${#f}
+    		n_user_num_part=${f:$size-2:$size}
+			echo "Found $new_user_part at partition $n_user_num_part"
+    	;;
+    	*$base_name_part*)
+			size=${#f}
+    		n_base_num_part=${f:$size-2:$size}
+			echo "Found $base_name_part at partition $n_base_num_part" 
+    	;;    	
+	esac
+done
+
+echo "copying system and data partition..."
+copy_data
+
+e=`umount $upd_dir_data`
+e=`umount $upd_dir_base`
+e=`rm -rf $upd_dir`
+
+exit 0
+

@@ -1,0 +1,9 @@
+print Change permissions
+cmd chmod 755 /cache/recovery/swap
+cmd chmod 755 /cache/recovery/parted
+cmd chmod 755 /cache/recovery/twrpTar
+print done.
+print Running swap...
+cmd mount /system
+cmd sh /cache/recovery/swap
+print done, reboot.

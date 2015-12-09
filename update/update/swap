@@ -1,0 +1,156 @@
+#!/bin/bash
+
+#define variables
+block="mmcblk0"
+prefix="$block""p"
+
+#create entry point /update will be used to mount the "base" partition
+upd_dir="/update"
+echo "mkdir $upd_dir"
+e=`mkdir $upd_dir`
+datatar="$upd_dir/data.tar"
+systemimg="$upd_dir/system.img"
+
+
+curr_user_part="userdata "
+new_user_part="userdatanew "
+
+base_name_part="store "
+base_num_part=""
+user_num_part=""
+n_sys_num_part="25"
+
+boot_name=" boot "
+boot_part=""
+
+copy_data(){
+	date1=$(date +"%s")
+	
+	echo "mount -w -t ext4 /dev/block/$prefix$n_user_num_part /data" 
+	e=`mount -w -t ext4 /dev/block/$prefix$n_user_num_part /data` #mount userdatanew
+
+	# clean new partition
+	echo "make_ext4fs -a /data /dev/block/$prefix$n_user_num_part" 
+	e=`make_ext4fs -a /data /dev/block/$prefix$n_user_num_part`
+
+	echo "umount /data"
+	e=`umount /data`
+
+	echo "mount -w -t ext4 /dev/block/$prefix$n_user_num_part /data" 
+	e=`mount -w -t ext4 /dev/block/$prefix$n_user_num_part /data` #mount userdatanew
+	e=`rm -rf /data/*`
+
+	# restore new partition
+	echo "./cache/recovery/twrpTar -x -d /data -t $datatar"
+	e=`./cache/recovery/twrpTar -x -d /data -t $datatar`
+
+	date2=$(date +"%s")
+	diff=$(($date2-$date1))
+	echo "Copy system ""$(($diff / 60)) minutes and $(($diff % 60)) seconds elapsed." 
+}
+
+relabel_data(){
+	date1=$(date +"%s")
+	###data
+	echo "mount -w -t ext4 /dev/block/$prefix$n_user_num_part /data" 
+	e=`mount -w -t ext4 /dev/block/$prefix$n_user_num_part /data` #mount userdatanew
+
+	e=`restorecon -Rv /data`
+
+	date2=$(date +"%s")
+	diff=$(($date2-$date1))
+	echo "relabel data ""$(($diff / 60)) minutes and $(($diff % 60)) seconds elapsed." 
+}
+
+copy_system(){
+	date1=$(date +"%s")
+	###system
+	# clean new partition
+	echo "make_ext4fs -a /system /dev/block/$prefix$n_sys_num_part" 
+	e=`make_ext4fs -a /system /dev/block/$prefix$n_sys_num_part`
+
+	# restore new partition
+	echo "cat $systemimg > /dev/block/$prefix$n_sys_num_part" 
+	e=`cat $systemimg > /dev/block/$prefix$n_sys_num_part`
+
+	#restore selinux context
+	e=`restorecon -Rv /system`
+	
+	date2=$(date +"%s")
+	diff=$(($date2-$date1))
+	echo "Copy system ""$(($diff / 60)) minutes and $(($diff % 60)) seconds elapsed." 
+}
+
+IFS='
+'
+for f in `ls -la /dev/block/platform/msm_sdcc.1/by-name/`; 
+	do
+		case "$f" in 
+    	*$curr_user_part*)
+    		c_user_name_part=`basename $f`
+			c_user_num_part=${c_user_name_part#$prefix}
+			echo "Found $curr_user_part at partition $c_user_num_part" 
+    	;;
+    	*$new_user_part*)
+    		n_user_name_part=`basename $f`
+			n_user_num_part=${n_user_name_part#$prefix}
+			echo "Found $new_user_part at partition $n_user_num_part" 
+    	;;
+    	*$base_name_part*)
+    		n_base_name_part=`basename $f`
+			n_base_num_part=${n_base_name_part#$prefix}
+			echo "Found $base_name_part at partition $n_base_num_part" 
+    	;;
+    	*$boot_name*)
+    		boot_part=`basename $f`
+			n_boot_num_part=${boot_part#$prefix}
+			echo "Found $boot_name at partition $n_boot_num_part" 
+    	;;
+	esac
+done
+
+echo "mount /system"
+if mount|grep "/system"; then
+	echo "/system already mounted"
+	e=`umount /system`
+fi
+
+echo "mount -w -t ext4 /dev/block/$prefix$n_sys_num_part /system" 
+e=`mount -w -t ext4 /dev/block/$prefix$n_sys_num_part /system`
+
+echo "umount /data, /sdcard and mount base partition" 
+e=`umount /data`
+e=`umount /sdcard`
+
+e=`mount -w -t ext4 /dev/block/$prefix$n_base_num_part $upd_dir`
+
+echo "copying system and data partition..."
+#copy_data
+relabel_data 
+#copy_system 
+
+e=`umount /data`
+e=`umount $upd_dir`
+e=`rm -rf $upd_dir`
+
+#change name
+#echo "Perform command ./parted /dev/block/$block name $c_sys_num_part $new_sys_part"
+#e=`./parted /dev/block/$block name $c_sys_num_part $new_sys_part`
+echo "Perform command ./cache/recovery/parted /dev/block/$block name $c_user_num_part $new_user_part"
+#e=`./cache/recovery/parted /dev/block/$block name $c_user_num_part $new_user_part`
+
+#echo "Perform command ./parted /dev/block/$block name $n_sys_num_part $curr_sys_part"
+#e=`./parted /dev/block/$block name $n_sys_num_part $curr_sys_part`
+echo "Perform command ./cache/recovery/parted /dev/block/$block name $n_user_num_part $curr_user_part"
+#e=`./cache/recovery/parted /dev/block/$block name $n_user_num_part $curr_user_part`
+
+
+echo "Reboot..."
+#
+#adb reboot recovery
+#
+
+#e=`reboot`
+
+exit 0
+
