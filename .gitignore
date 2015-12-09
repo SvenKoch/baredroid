@@ -1,0 +1,6 @@
+# ignore folders
+experiments/
+log/
+
+# compiled
+*.pyc
