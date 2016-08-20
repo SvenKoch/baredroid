@@ -1,6 +1,6 @@
 # **BareDroid** #
 
-BareDroid allows for bare-metal analysis on Android devices. See the paper [here](http://cs.ucsb.edu/~yanick/publications/2015_acsac_baredroid.pdf)
+BareDroid allows for bare-metal analysis on Android devices. See the paper [here](https://www.cs.ucsb.edu/~vigna/publications/2015_ACSAC_Baredroid.pdf)
 
 ## Folders ##
 
