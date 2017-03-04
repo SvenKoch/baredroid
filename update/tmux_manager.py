@@ -5,10 +5,10 @@ import tmuxp
 def tmux_init(devices, session_name):
     
     #start server
-    server = tmuxp.Server()
+    server = tmuxp.cli.Server()
 
     #find the session created by the init script
-    session = server.findWhere({ "session_name": session_name })
+    session = server.find_where({ "session_name": session_name })
 
     #rename the first window
     session.list_windows()[0].rename_window('main')
