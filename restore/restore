@@ -45,12 +45,10 @@ copy_data(){
 	e=`mount -w -t ext4 /dev/block/$prefix$1 /data`
 
 	# restore new partition
-	echo "./twrpTar -x -d /data -t $datatar"
-	e=`./twrpTar -x -d /data -t $datatar`
-	#e=`umount /tmp_data`
 
-	echo "restorecon -Rv /data"
-	e=`restorecon -Rv /data`
+	echo "tar -xpf $datatar"
+	e=`tar -xpf $datatar`
+	#e=`umount /tmp_data`
 
 	date2=$(date +"%s")
 	diff=$(($date2-$date1))

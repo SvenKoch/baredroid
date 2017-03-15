@@ -27,8 +27,9 @@ copy_data(){
 	date1=$(date +"%s")
 
 	# restore new partition
-	echo "./twrpTar -c -d /data -t $datatar"
-	e=`./twrpTar -c -d /data -t $datatar`
+
+	echo "tar -cpf $datatar /data/*"
+	e=`tar -cpf $datatar /data/*`
 
 	date2=$(date +"%s")
 	diff=$(($date2-$date1))
