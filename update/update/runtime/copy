@@ -29,12 +29,12 @@ copy_data(){
 	#mount base
 	echo "mount -w -t ext4 /dev/block/$prefix$n_base_num_part $upd_dir_base"
 	e=`mount -w -t ext4 /dev/block/$prefix$n_base_num_part $upd_dir_base`
-	
+
 	# mount new partition
 	echo "mount -w -t ext4 /dev/block/$prefix$n_user_num_part $upd_dir_data"
 	e=`mount -w -t ext4 /dev/block/$prefix$n_user_num_part $upd_dir_data`
 	# clean new partition
-	
+
 
 	###### I can't modify the file_contexts thus I can't create a security context for this folder
 	echo "make_ext4fs -a $upd_dir_data /dev/block/$prefix$n_user_num_part"
@@ -42,7 +42,7 @@ copy_data(){
 	###########
 	echo "umount $upd_dir_data"
 	e=`umount $upd_dir_data`
-	
+
 	echo "mount -w -t ext4 /dev/block/$prefix$n_user_num_part $upd_dir_data"
 	e=`mount -w -t ext4 /dev/block/$prefix$n_user_num_part $upd_dir_data`
 
@@ -50,9 +50,8 @@ copy_data(){
 	#e=`rm -rf $upd_dir_data/*`
 
 	# restore new partition
-	echo "/data/security/shell/./twrpTar -x -d $upd_dir_data -t $datatar"
-	e=`/data/security/shell/./twrpTar -x -d $upd_dir_data -t $datatar`
-	#e=`umount /tmp_data`
+	echo "tar -C $upd_dir_data -xpf $datatar"
+	e=`tar -C $upd_dir_data -xpf $datatar`
 
 	date2=$(date +"%s")
 	diff=$(($date2-$date1))
@@ -61,9 +60,9 @@ copy_data(){
 
 IFS='
 '
-for f in `ls -la /dev/block/platform/msm_sdcc.1/by-name/`; 
+for f in `ls -la /dev/block/platform/msm_sdcc.1/by-name/`;
 	do
-		case "$f" in 
+		case "$f" in
     	*$curr_user_part*)
     		#c_user_name_part=`basename $f` # I can't use 'basename' in stock rom, and also 'cut' ...WAT...
     		## get the last two decimal in the path (example: lrwxrwxrwx root root 1970-07-09 21:07 userdata -> /dev/block/mmcblk0p28
@@ -81,7 +80,7 @@ for f in `ls -la /dev/block/platform/msm_sdcc.1/by-name/`;
 			size=${#f}
     		n_base_num_part=${f:$size-2:$size}
 			echo "Found $base_name_part at partition $n_base_num_part" 
-    	;;    	
+    	;;
 	esac
 done
 

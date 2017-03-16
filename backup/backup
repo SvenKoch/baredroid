@@ -28,8 +28,8 @@ copy_data(){
 
 	# restore new partition
 
-	echo "tar -cpf $datatar /data/*"
-	e=`tar -cpf $datatar /data/*`
+	echo "tar -C /data -cpf $datatar ."
+	e=`tar -C /data -cpf $datatar .`
 
 	date2=$(date +"%s")
 	diff=$(($date2-$date1))
@@ -40,50 +40,50 @@ copy_system(){
 	date1=$(date +"%s")
 	###system
 
-	echo "cat /dev/block/$prefix$n_sys_num_part > $systemimg" 
+	echo "cat /dev/block/$prefix$n_sys_num_part > $systemimg"
 	e=`cat /dev/block/$prefix$n_sys_num_part > $systemimg`
-	
+
 	date2=$(date +"%s")
 	diff=$(($date2-$date1))
-	echo "Copy system ""$(($diff / 60)) minutes and $(($diff % 60)) seconds elapsed." 
+	echo "Copy system ""$(($diff / 60)) minutes and $(($diff % 60)) seconds elapsed."
 }
 
 copy_boot(){
 	date1=$(date +"%s")
 	###system
 
-	echo "cat /dev/block/$prefix$n_boot_num_part > $bootimg" 
+	echo "cat /dev/block/$prefix$n_boot_num_part > $bootimg"
 	e=`cat /dev/block/$prefix$n_boot_num_part > $bootimg`
-	
+
 	date2=$(date +"%s")
 	diff=$(($date2-$date1))
-	echo "Copy system ""$(($diff / 60)) minutes and $(($diff % 60)) seconds elapsed." 
+	echo "Copy system ""$(($diff / 60)) minutes and $(($diff % 60)) seconds elapsed."
 }
 
 IFS='
 '
-for f in `ls -la /dev/block/platform/msm_sdcc.1/by-name/`; 
+for f in `ls -la /dev/block/platform/msm_sdcc.1/by-name/`;
 	do
-		case "$f" in 
+		case "$f" in
     	*$curr_user_part*)
     		c_user_name_part=`basename $f`
 			c_user_num_part=${c_user_name_part#$prefix}
-			echo "Found $curr_user_part at partition $c_user_num_part" 
+			echo "Found $curr_user_part at partition $c_user_num_part"
     	;;
     	*$new_user_part*)
     		n_user_name_part=`basename $f`
 			n_user_num_part=${n_user_name_part#$prefix}
-			echo "Found $new_user_part at partition $n_user_num_part" 
+			echo "Found $new_user_part at partition $n_user_num_part"
     	;;
     	*$base_name_part*)
     		n_base_name_part=`basename $f`
 			n_base_num_part=${n_base_name_part#$prefix}
-			echo "Found $base_name_part at partition $n_base_num_part" 
+			echo "Found $base_name_part at partition $n_base_num_part"
     	;;
     	*$boot_name*)
     		boot_part=`basename $f`
 			n_boot_num_part=${boot_part#$prefix}
-			echo "Found $boot_name at partition $n_boot_num_part" 
+			echo "Found $boot_name at partition $n_boot_num_part"
     	;;
 	esac
 done
@@ -91,7 +91,7 @@ done
 echo "mount -w -t ext4 /dev/block/$prefix$n_base_num_part $upd_dir"
 e=`mount -w -t ext4 /dev/block/$prefix$n_base_num_part $upd_dir`
 
-echo "rm -rf $upd_dir/*" 
+echo "rm -rf $upd_dir/*"
 e=`rm -rf $upd_dir/*`
 
 echo "copy system..."
@@ -104,15 +104,15 @@ if mount|grep "/system"; then
 	e=`umount /system`
 fi
 
-echo "mount -w -t ext4 /dev/block/$prefix$n_sys_num_part /system" 
+echo "mount -w -t ext4 /dev/block/$prefix$n_sys_num_part /system"
 e=`mount -w -t ext4 /dev/block/$prefix$n_sys_num_part /system`
 
 echo "copy_data"
-copy_data 
+copy_data
 
 echo "copy_boot"
 copy_boot
- 
+
 e=`umount /data`
 e=`umount $upd_dir`
 e=`rm -rf $upd_dir`

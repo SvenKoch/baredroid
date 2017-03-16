@@ -23,32 +23,6 @@ n_sys_num_part="25"
 boot_name=" boot "
 boot_part=""
 
-copy_data(){
-	date1=$(date +"%s")
-	
-	echo "mount -w -t ext4 /dev/block/$prefix$n_user_num_part /data" 
-	e=`mount -w -t ext4 /dev/block/$prefix$n_user_num_part /data` #mount userdatanew
-
-	# clean new partition
-	echo "make_ext4fs -a /data /dev/block/$prefix$n_user_num_part" 
-	e=`make_ext4fs -a /data /dev/block/$prefix$n_user_num_part`
-
-	echo "umount /data"
-	e=`umount /data`
-
-	echo "mount -w -t ext4 /dev/block/$prefix$n_user_num_part /data" 
-	e=`mount -w -t ext4 /dev/block/$prefix$n_user_num_part /data` #mount userdatanew
-	e=`rm -rf /data/*`
-
-	# restore new partition
-	echo "./cache/recovery/twrpTar -x -d /data -t $datatar"
-	e=`./cache/recovery/twrpTar -x -d /data -t $datatar`
-
-	date2=$(date +"%s")
-	diff=$(($date2-$date1))
-	echo "Copy system ""$(($diff / 60)) minutes and $(($diff % 60)) seconds elapsed." 
-}
-
 relabel_data(){
 	date1=$(date +"%s")
 	###data
@@ -75,7 +49,7 @@ copy_system(){
 
 	#restore selinux context
 	e=`restorecon -Rv /system`
-	
+
 	date2=$(date +"%s")
 	diff=$(($date2-$date1))
 	echo "Copy system ""$(($diff / 60)) minutes and $(($diff % 60)) seconds elapsed." 
@@ -118,39 +92,23 @@ fi
 echo "mount -w -t ext4 /dev/block/$prefix$n_sys_num_part /system" 
 e=`mount -w -t ext4 /dev/block/$prefix$n_sys_num_part /system`
 
-echo "umount /data, /sdcard and mount base partition" 
-e=`umount /data`
-e=`umount /sdcard`
-
+echo "mount base partition"
 e=`mount -w -t ext4 /dev/block/$prefix$n_base_num_part $upd_dir`
 
-echo "copying system and data partition..."
-#copy_data
-relabel_data 
-#copy_system 
+echo "copying system partition..."
+#relabel_data
+copy_system
 
 e=`umount /data`
 e=`umount $upd_dir`
 e=`rm -rf $upd_dir`
 
 #change name
-#echo "Perform command ./parted /dev/block/$block name $c_sys_num_part $new_sys_part"
-#e=`./parted /dev/block/$block name $c_sys_num_part $new_sys_part`
-echo "Perform command ./cache/recovery/parted /dev/block/$block name $c_user_num_part $new_user_part"
-#e=`./cache/recovery/parted /dev/block/$block name $c_user_num_part $new_user_part`
+echo "Perform command ./parted /dev/block/$block name $c_sys_num_part $new_sys_part"
+e=`./parted /dev/block/$block name $c_sys_num_part $new_sys_part`
 
-#echo "Perform command ./parted /dev/block/$block name $n_sys_num_part $curr_sys_part"
-#e=`./parted /dev/block/$block name $n_sys_num_part $curr_sys_part`
-echo "Perform command ./cache/recovery/parted /dev/block/$block name $n_user_num_part $curr_user_part"
-#e=`./cache/recovery/parted /dev/block/$block name $n_user_num_part $curr_user_part`
-
-
-echo "Reboot..."
-#
-#adb reboot recovery
-#
-
-#e=`reboot`
+echo "Perform command ./parted /dev/block/$block name $n_sys_num_part $curr_sys_part"
+e=`./parted /dev/block/$block name $n_sys_num_part $curr_sys_part`
 
 exit 0
 

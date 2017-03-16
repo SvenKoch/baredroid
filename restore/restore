@@ -26,12 +26,12 @@ boot_part=""
 copy_data(){
 	date1=$(date +"%s")
 	###data
-	
+
 	# mount new partition
 	#echo "mount -w -t ext4 /dev/block/$prefix$1 /data"
 	#e=`mount -w -t ext4 /dev/block/$prefix$1 /data`
 	# clean new partition
-	
+
 
 	###### I can't modify the file_contexts thus I can't create a security context for this folder
 	echo "make_ext4fs -a /data /dev/block/$prefix$1"
@@ -40,15 +40,14 @@ copy_data(){
 
 	echo "rm -rf /data/*"
 	e=`rm -rf /data/*`
-	
+
 	echo "mount -w -t ext4 /dev/block/$prefix$1 /data"
 	e=`mount -w -t ext4 /dev/block/$prefix$1 /data`
 
 	# restore new partition
 
-	echo "tar -xpf $datatar"
-	e=`tar -xpf $datatar`
-	#e=`umount /tmp_data`
+	echo "tar -C /data -xpf $datatar"
+	e=`tar -C /data -xpf $datatar`
 
 	date2=$(date +"%s")
 	diff=$(($date2-$date1))
@@ -59,62 +58,62 @@ copy_system(){
 	date1=$(date +"%s")
 	###system
 	# clean new partition
-	echo "make_ext4fs -a /system /dev/block/$prefix$n_sys_num_part" 
+	echo "make_ext4fs -a /system /dev/block/$prefix$n_sys_num_part"
 	e=`make_ext4fs -a /system /dev/block/$prefix$n_sys_num_part`
 
-	echo "umount /system" 
+	echo "umount /system"
 	e=`umount /system`
 
-	#echo "mount -w -t ext4 /dev/block/$prefix$n_sys_num_part /system" 
+	#echo "mount -w -t ext4 /dev/block/$prefix$n_sys_num_part /system"
 	#e=`mount -w -t ext4 /dev/block/$prefix$n_sys_num_part /system`
 
-	#echo "rm -rf /system/*" 
+	#echo "rm -rf /system/*"
 	#e=`rm -rf /system/*`
 
 	# restore new partition
-	#echo "cp -p -R $systemimg /system" 
+	#echo "cp -p -R $systemimg /system"
 	#e=`cp -p -R $systemimg /system`
 
-	echo "cat $systemimg > /dev/block/$prefix$n_sys_num_part" 
+	echo "cat $systemimg > /dev/block/$prefix$n_sys_num_part"
 	e=`cat $systemimg > /dev/block/$prefix$n_sys_num_part`
 
 	#restore selinux context
 	e=`restorecon -Rv /system`
-	
+
 	date2=$(date +"%s")
 	diff=$(($date2-$date1))
-	echo "Copy system ""$(($diff / 60)) minutes and $(($diff % 60)) seconds elapsed." 
+	echo "Copy system ""$(($diff / 60)) minutes and $(($diff % 60)) seconds elapsed."
 }
 
 IFS='
 '
-for f in `ls -la /dev/block/platform/msm_sdcc.1/by-name/`; 
+for f in `ls -la /dev/block/platform/msm_sdcc.1/by-name/`;
 	do
-		case "$f" in 
+		case "$f" in
     	*$curr_user_part*)
     		c_user_name_part=`basename $f`
 			c_user_num_part=${c_user_name_part#$prefix}
-			echo "Found $curr_user_part at partition $c_user_num_part" 
+			echo "Found $curr_user_part at partition $c_user_num_part"
     	;;
     	*$new_user_part*)
     		n_user_name_part=`basename $f`
 			n_user_num_part=${n_user_name_part#$prefix}
-			echo "Found $new_user_part at partition $n_user_num_part" 
+			echo "Found $new_user_part at partition $n_user_num_part"
     	;;
     	*$base_name_part*)
     		n_base_name_part=`basename $f`
 			n_base_num_part=${n_base_name_part#$prefix}
-			echo "Found $base_name_part at partition $n_base_num_part" 
+			echo "Found $base_name_part at partition $n_base_num_part"
     	;;
     	*$boot_name*)
     		boot_part=`basename $f`
 			n_boot_num_part=${boot_part#$prefix}
-			echo "Found $boot_name at partition $n_boot_num_part" 
+			echo "Found $boot_name at partition $n_boot_num_part"
     	;;
 	esac
 done
 
-echo "umount /data, /sdcard" 
+echo "umount /data, /sdcard"
 e=`umount /data`
 e=`umount /sdcard`
 
@@ -131,7 +130,7 @@ if mount|grep "/system"; then
 	e=`umount /system`
 fi
 
-echo "mount -w -t ext4 /dev/block/$prefix$n_sys_num_part /system" 
+echo "mount -w -t ext4 /dev/block/$prefix$n_sys_num_part /system"
 e=`mount -w -t ext4 /dev/block/$prefix$n_sys_num_part /system`
 
 echo "copy_data $n_user_num_part"
@@ -141,7 +140,7 @@ e=`umount /data`
 
 echo "copy_data $c_user_num_part"
 copy_data $c_user_num_part
- 
+
 e=`umount /data`
 e=`umount $upd_dir`
 e=`rm -rf $upd_dir`
