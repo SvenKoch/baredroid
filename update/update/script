@@ -1,9 +1,5 @@
 #!/bin/bash
 
-#
-log="$2"
-#
-
 #adb reboot recovery
 sleep 2
 devices=`adb devices`
@@ -12,7 +8,7 @@ recovery="recovery"
 found=1
 while [[ -n "$devices" ]]; do
 
-	echo "$serial: <waiting for devices>" >> "$log"
+	echo "$serial: <waiting for devices>"
 	devices=`adb devices`
 	sleep 2
 
@@ -23,7 +19,7 @@ while [[ -n "$devices" ]]; do
 			devices=""
 			found=0
 		elif [[ found -eq 0 && "$item" == "$recovery" ]]; then
-			echo "$serial: Device $serial is in '$recovery' mode" >> "$log"
+			echo "$serial: Device $serial is in '$recovery' mode"
 			devices=""
 			break
 		fi
@@ -33,23 +29,20 @@ done
 sleep 5
 #upload a new openrecoveryscript, 
 #this script will be executed at the next reboot in recovery 
-echo "$serial: push swap" >> "$log"
+echo "$serial: push swap"
 adb push ./swap /cache/recovery/
-echo "$serial: push parted" >> "$log"
+echo "$serial: push parted"
 adb push ./parted /cache/recovery/
-echo "$serial: push twrpTar" >> "$log"
-adb push ./twrpTar /cache/recovery/
 
 sleep 1
-echo "$serial: Update permission." >> "$log"
+echo "$serial: Update permission."
 adb shell chmod 755 /cache/recovery/swap
 adb shell chmod 755 /cache/recovery/parted
-adb shell chmod 755 /cache/recovery/twrpTar
-echo "$serial: Run swap script." >> "$log"
+echo "$serial: Run swap script."
 adb shell sh /cache/recovery/swap
 
-adb shell rm -rf /cache/recovery/swap
-adb shell rm -rf /cache/recovery/parted
+adb shell rm /cache/recovery/swap
+adb shell rm /cache/recovery/parted
 
 
 

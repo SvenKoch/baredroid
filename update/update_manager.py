@@ -37,6 +37,7 @@ class UpdateManager(object):
         self._logger = util.init_logger(config.configFile, label)
 
         self._queue = Queue() # used to share message (for now only exit)
+	print 'created UpdateManager'
 
     def getDeviceId(self):
         """Return deviceId."""
@@ -68,17 +69,17 @@ class UpdateManager(object):
             sleep(3)
             count = count + 1
             if mode:
-                if self.getDeviceId in self.getShell().devices().keys() and\
+                if self.getDeviceId() in self.getShell().devices().keys() and\
                     self.getShell().devices().get(self.getDeviceId()) == mode:
                     break
             else:
-                if self.getDeviceId in self.getShell().devices().keys():
+                if self.getDeviceId() in self.getShell().devices().keys():
                     break
             
             #[bugfix] sometimes the script does not reboot. be sure to reboot the system 
-            if count == 10: #wait 30 seconds
-                self.getShell().reboot('device')
-                count = 0
+           # if count == 10: #wait 30 seconds
+            #    self.getShell().reboot('device')
+             #   count = 0
 
         self._logger.info('device is alive')
 
@@ -86,7 +87,7 @@ class UpdateManager(object):
         """This function allows to reboot the device in recovery mode.
         The parameter 'mode' is used to determine the expected mode after the reboot."""
         self._logger.info('reboot and wait for %s' % mode)
-        self.getShell().reboot('recovery')
+        self.getShell().reboot(mode)
         self.waitFor(mode)
 
     def copyFiles(self):
@@ -109,7 +110,7 @@ class UpdateManager(object):
         
         #perform restore
         self._logger.info('run swap script')
-        recovery = UpdateManagerRecovery(self.getDeviceId)
+        recovery = UpdateManagerRecovery(self.getDeviceId())
         recovery.startUpdate()
         self._logger.info('running...')
         recovery.join()
@@ -239,7 +240,7 @@ class UpdateManager(object):
                     break
 
                 self._logger.info('Start restore process') 
-                ###self.restore()
+                self.restore()
                 self._logger.info('End restore process') 
 
                 #slow down the process

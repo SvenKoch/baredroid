@@ -17,10 +17,11 @@ datatar="$upd_dir_base/data.tar"
 curr_user_part="userdata "
 new_user_part="userdatanew "
 base_name_part="store "
-base_num_part=""
 
-sys_num_part=""
-user_num_part=""
+c_user_num_part=""
+n_user_num_part=""
+n_base_num_part=""
+
 
 copy_data(){
 	date1=$(date +"%s")
@@ -60,25 +61,22 @@ copy_data(){
 
 IFS='
 '
-for f in `ls -la /dev/block/platform/msm_sdcc.1/by-name/`;
+for f in `ls -la /dev/block/platform/msm_sdcc.1/by-name/`; 
 	do
-		case "$f" in
+		case "$f" in 
     	*$curr_user_part*)
-    		#c_user_name_part=`basename $f` # I can't use 'basename' in stock rom, and also 'cut' ...WAT...
-    		## get the last two decimal in the path (example: lrwxrwxrwx root root 1970-07-09 21:07 userdata -> /dev/block/mmcblk0p28
-    		size=${#f}
-    		c_user_num_part=${f:$size-2:$size}
-			##
-			echo "Found $curr_user_part at partition $c_user_num_part"
+    		c_user_name_part=`basename $f`
+			c_user_num_part=${c_user_name_part#$prefix}
+			echo "Found $curr_user_part at partition $c_user_num_part" 
     	;;
     	*$new_user_part*)
-			size=${#f}
-    		n_user_num_part=${f:$size-2:$size}
-			echo "Found $new_user_part at partition $n_user_num_part"
+    		n_user_name_part=`basename $f`
+			n_user_num_part=${n_user_name_part#$prefix}
+			echo "Found $new_user_part at partition $n_user_num_part" 
     	;;
     	*$base_name_part*)
-			size=${#f}
-    		n_base_num_part=${f:$size-2:$size}
+    		n_base_name_part=`basename $f`
+			n_base_num_part=${n_base_name_part#$prefix}
 			echo "Found $base_name_part at partition $n_base_num_part" 
     	;;
 	esac

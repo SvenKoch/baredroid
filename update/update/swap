@@ -104,11 +104,11 @@ e=`umount $upd_dir`
 e=`rm -rf $upd_dir`
 
 #change name
-echo "Perform command ./parted /dev/block/$block name $c_sys_num_part $new_sys_part"
-e=`./parted /dev/block/$block name $c_sys_num_part $new_sys_part`
+echo "Perform command /cache/recovery/parted /dev/block/$block name $c_user_num_part $new_user_part"
+e=`/cache/recovery/parted /dev/block/$block name $c_user_num_part $new_user_part`
 
-echo "Perform command ./parted /dev/block/$block name $n_sys_num_part $curr_sys_part"
-e=`./parted /dev/block/$block name $n_sys_num_part $curr_sys_part`
+echo "Perform command /cache/recovery/parted /dev/block/$block name $n_user_num_part $curr_user_part"
+e=`/cache/recovery/parted /dev/block/$block name $n_user_num_part $curr_user_part`
 
 exit 0
 
